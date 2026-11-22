@@ -92,4 +92,7 @@ export class Storage {
 export const storageKeys = {
   paperFile: (userId: string, paperId: string, fileId: string) =>
     `users/${userId}/papers/${paperId}/${fileId}`,
+  /** Preview image of a paper (first PDF page or the website's image). */
+  paperThumbnail: (userId: string, paperId: string) =>
+    `users/${userId}/papers/${paperId}/thumbnail`,
 };

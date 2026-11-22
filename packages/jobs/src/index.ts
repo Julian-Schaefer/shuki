@@ -17,7 +17,7 @@ const defineQueue = <S extends z.ZodType>(definition: QueueDefinition<S>) => def
  * and validated on both ends.
  *
  * Planned queues (see roadmap): paper.ingest-pdf, paper.enrich-metadata,
- * paper.clip-url, paper.index, paper.embed, paper.summarize.
+ * paper.index, paper.embed, paper.summarize.
  */
 export const queues = {
   /** Skeleton job: runs after a paper was created or a file was uploaded. */
@@ -25,10 +25,25 @@ export const queues = {
     schema: z.object({ paperId: z.uuid() }),
     options: { retryLimit: 3, retryDelay: 10, retryBackoff: true, expireInSeconds: 15 * 60 },
   }),
+  /** Fetches a saved website and extracts a reader view, text and metadata. */
+  "paper.clip-url": defineQueue({
+    schema: z.object({
+      paperId: z.uuid(),
+      /** Replace the placeholder title with the page title. */
+      replaceTitle: z.boolean().default(false),
+    }),
+    options: { retryLimit: 2, retryDelay: 30, retryBackoff: true, expireInSeconds: 5 * 60 },
+  }),
+  /** (Re)creates a paper's preview image – used to backfill existing papers. */
+  "paper.thumbnail": defineQueue({
+    schema: z.object({ paperId: z.uuid() }),
+    options: { retryLimit: 1, retryDelay: 60, expireInSeconds: 5 * 60 },
+  }),
 } satisfies Record<string, QueueDefinition<z.ZodType>>;
 
 export type QueueName = keyof typeof queues;
-export type JobPayload<Q extends QueueName> = z.infer<(typeof queues)[Q]["schema"]>;
+export type JobPayload<Q extends QueueName> = z.output<(typeof queues)[Q]["schema"]>;
+export type JobInput<Q extends QueueName> = z.input<(typeof queues)[Q]["schema"]>;
 export const queueNames = Object.keys(queues) as QueueName[];
 
 export type CreateBossOptions = {
@@ -72,7 +87,7 @@ export async function ensureQueues(boss: PgBoss): Promise<void> {
 export async function enqueue<Q extends QueueName>(
   boss: PgBoss,
   name: Q,
-  payload: JobPayload<Q>,
+  payload: JobInput<Q>,
   options?: SendOptions,
 ): Promise<string | null> {
   const data = queues[name].schema.parse(payload) as object;

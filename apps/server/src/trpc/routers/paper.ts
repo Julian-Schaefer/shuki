@@ -7,18 +7,34 @@ import {
   inArray,
   isNull,
   paper,
+  paperContent,
   paperTag,
   processingStatus,
   type SQL,
   tag,
 } from "@shuki/db";
 import { enqueue } from "@shuki/jobs";
+import { storageKeys } from "@shuki/storage";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure, router } from "../init";
 import { assertFolderOwned } from "./folder";
 
 const paperId = z.object({ id: z.uuid() });
+
+/** Only public web pages can be saved. */
+const webUrl = z.url({ protocol: /^https?$/, message: "Enter a valid http(s) URL" }).max(2048);
+
+/** Enqueues the background job that fits the paper's source. */
+function enqueueProcessing(
+  boss: Parameters<typeof enqueue>[0],
+  target: { id: string; sourceType: string },
+  options: { replaceTitle?: boolean } = {},
+) {
+  return target.sourceType === "url"
+    ? enqueue(boss, "paper.clip-url", { paperId: target.id, replaceTitle: options.replaceTitle })
+    : enqueue(boss, "paper.process", { paperId: target.id });
+}
 
 export const paperRouter = router({
   list: protectedProcedure
@@ -58,6 +74,9 @@ export const paperRouter = router({
           sourceType: true,
           status: true,
           folderId: true,
+          venue: true,
+          url: true,
+          thumbnailAt: true,
           createdAt: true,
         },
       });
@@ -76,6 +95,29 @@ export const paperRouter = router({
       ctx.db.select({ id: paperTag.tagId }).from(paperTag).where(eq(paperTag.paperId, result.id)),
     ]);
     return { ...result, files, tagIds: tags.map((t) => t.id) };
+  }),
+
+  /** Everything the preview panel needs: the PDF to show or the saved website. */
+  preview: protectedProcedure.input(paperId).query(async ({ ctx, input }) => {
+    const found = await ctx.db.query.paper.findFirst({
+      where: and(eq(paper.id, input.id), eq(paper.userId, ctx.user.id)),
+      columns: { id: true, title: true, url: true, sourceType: true, status: true, error: true },
+    });
+    if (!found) throw new TRPCError({ code: "NOT_FOUND" });
+    const [pdf] = await ctx.db
+      .select({ id: file.id, fileName: file.fileName })
+      .from(file)
+      .where(and(eq(file.paperId, found.id), eq(file.mimeType, "application/pdf")))
+      .limit(1);
+    const [content] = await ctx.db
+      .select({
+        html: paperContent.html,
+        imageUrl: paperContent.imageUrl,
+        embeddable: paperContent.embeddable,
+      })
+      .from(paperContent)
+      .where(eq(paperContent.paperId, found.id));
+    return { ...found, pdf: pdf ?? null, website: content?.html != null ? content : null };
   }),
 
   /** Replaces the tags of a paper. */
@@ -105,27 +147,34 @@ export const paperRouter = router({
 
   create: protectedProcedure
     .input(
-      z.object({
-        title: z.string().trim().min(1).max(1000),
-        /** When true the client uploads a file next and the upload enqueues processing. */
-        withFile: z.boolean().default(false),
-        folderId: z.uuid().nullable().default(null),
-      }),
+      z
+        .object({
+          title: z.string().trim().max(1000).optional(),
+          /** Save a website: the worker fetches it and extracts a reader view. */
+          url: webUrl.optional(),
+          /** When true the client uploads a file next and the upload enqueues processing. */
+          withFile: z.boolean().default(false),
+          folderId: z.uuid().nullable().default(null),
+        })
+        .refine((v) => Boolean(v.title || v.url), "Enter a title or a URL"),
     )
     .mutation(async ({ ctx, input }) => {
       if (input.folderId) await assertFolderOwned(ctx.db, ctx.user.id, input.folderId);
+      const sourceType = input.url ? "url" : input.withFile ? "pdf" : "manual";
       const [created] = await ctx.db
         .insert(paper)
         .values({
           userId: ctx.user.id,
-          title: input.title,
+          // Websites without a title get the host as placeholder until the worker fills it in.
+          title: input.title || new URL(input.url ?? "").hostname,
+          url: input.url,
           folderId: input.folderId,
-          sourceType: input.withFile ? "pdf" : "manual",
+          sourceType,
         })
-        .returning({ id: paper.id });
+        .returning({ id: paper.id, sourceType: paper.sourceType });
       if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       if (!input.withFile) {
-        await enqueue(ctx.boss, "paper.process", { paperId: created.id });
+        await enqueueProcessing(ctx.boss, created, { replaceTitle: !input.title });
       }
       return created;
     }),
@@ -147,9 +196,9 @@ export const paperRouter = router({
       .update(paper)
       .set({ status: "pending", error: null })
       .where(and(eq(paper.id, input.id), eq(paper.userId, ctx.user.id)))
-      .returning({ id: paper.id });
+      .returning({ id: paper.id, sourceType: paper.sourceType });
     if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
-    await enqueue(ctx.boss, "paper.process", { paperId: updated.id });
+    await enqueueProcessing(ctx.boss, updated);
     return updated;
   }),
 
@@ -163,7 +212,10 @@ export const paperRouter = router({
       .where(and(eq(paper.id, input.id), eq(paper.userId, ctx.user.id)))
       .returning({ id: paper.id });
     if (!deleted) throw new TRPCError({ code: "NOT_FOUND" });
-    await Promise.allSettled(files.map((f) => ctx.storage.delete(f.storageKey)));
+    await Promise.allSettled([
+      ...files.map((f) => ctx.storage.delete(f.storageKey)),
+      ctx.storage.delete(storageKeys.paperThumbnail(ctx.user.id, deleted.id)),
+    ]);
     return deleted;
   }),
 });

@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
   bigint,
+  boolean,
   customType,
   index,
   integer,
@@ -90,6 +91,8 @@ export const paper = pgTable(
     sourceType: paperSourceType().notNull().default("manual"),
     status: processingStatus().notNull().default("pending"),
     error: text(),
+    /** When the preview image was last generated (null = none). Also used for cache busting. */
+    thumbnailAt: timestamp({ withTimezone: true }),
     ...timestamps,
   },
   (t) => [
@@ -129,8 +132,15 @@ export const paperContent = pgTable(
     paperId: uuid()
       .primaryKey()
       .references(() => paper.id, { onDelete: "cascade" }),
+    /** Plain text (PDF text or website article) – feeds full-text search. */
     content: text().notNull(),
     searchVector: tsvector().generatedAlwaysAs(sql`to_tsvector('simple', coalesce(content, ''))`),
+    /** Sanitized reader-view HTML of a saved website. */
+    html: text(),
+    /** Preview image of a website (og:image), absolute URL. */
+    imageUrl: text(),
+    /** Whether the original page allows being embedded in an iframe (live preview). */
+    embeddable: boolean(),
     ...timestamps,
   },
   (t) => [index("paper_content_search_idx").using("gin", t.searchVector)],

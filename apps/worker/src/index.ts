@@ -3,7 +3,9 @@ import { createDb } from "@shuki/db";
 import { createBoss, ensureQueues, registerWorker } from "@shuki/jobs";
 import { Storage } from "@shuki/storage";
 import type { WorkerContext } from "./context";
+import { createClipUrlHandler } from "./handlers/paper-clip-url";
 import { createPaperProcessHandler } from "./handlers/paper-process";
+import { backfillThumbnails, createThumbnailHandler } from "./handlers/paper-thumbnail";
 
 const env = loadEnv(workerEnvSchema);
 
@@ -28,6 +30,15 @@ const concurrency = env.WORKER_CONCURRENCY;
 await registerWorker(context.boss, "paper.process", createPaperProcessHandler(context), {
   concurrency,
 });
+
+await registerWorker(context.boss, "paper.clip-url", createClipUrlHandler(context), {
+  concurrency,
+});
+
+await registerWorker(context.boss, "paper.thumbnail", createThumbnailHandler(context), {
+  concurrency,
+});
+await backfillThumbnails(context);
 
 console.log(`Shuki worker started (concurrency ${concurrency})`);
 

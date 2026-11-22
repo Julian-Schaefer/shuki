@@ -1,9 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileTextIcon, FolderIcon, FolderPlusIcon, MoreHorizontalIcon } from "lucide-react";
+import {
+  FileTextIcon,
+  FolderIcon,
+  FolderPlusIcon,
+  GlobeIcon,
+  LayoutGridIcon,
+  ListIcon,
+  MoreHorizontalIcon,
+} from "lucide-react";
 import { z } from "zod";
 import { FolderActionsMenuItems } from "@/components/folder-actions";
 import { FolderDialog, useFolderDialog } from "@/components/folder-dialogs";
+import { FolderCard, PaperCard } from "@/components/library-cards";
 import { MoveToFolderSubmenu, useMovePapers } from "@/components/move-to-folder-menu";
 import { NewPaperDialog } from "@/components/new-paper-dialog";
 import { type Crumb, PageHeader } from "@/components/page-header";
@@ -23,8 +32,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { type FolderRow, folderPath, foldersQuery } from "@/lib/folders";
+import { usePreview } from "@/lib/preview";
 import { trpc } from "@/lib/trpc";
+import { useLocalStorage } from "@/lib/use-local-storage";
 
 /**
  * The library page is a folder explorer (subfolders + papers of the current
@@ -40,6 +52,9 @@ export const Route = createFileRoute("/_app/")({
   component: LibraryPage,
 });
 
+const LAYOUTS = ["list", "grid"] as const;
+type Layout = (typeof LAYOUTS)[number];
+
 function LibraryPage() {
   const { view, tag, folder } = Route.useSearch();
   const filtered = Boolean(view || tag);
@@ -47,6 +62,8 @@ function LibraryPage() {
   const isExplorer = !filtered;
   const dialog = useFolderDialog();
   const navigate = Route.useNavigate();
+  const { previewId } = usePreview();
+  const [layout, setLayout] = useLocalStorage("shuki.library.layout", "list", LAYOUTS);
 
   const folders = useQuery(foldersQuery());
   const folderRows = folders.data ?? [];
@@ -85,6 +102,32 @@ function LibraryPage() {
         breadcrumbs={breadcrumbs}
         actions={
           <>
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              spacing={0}
+              value={layout}
+              onValueChange={(value) => value && setLayout(value as Layout)}
+              aria-label="Layout"
+            >
+              <ToggleGroupItem
+                value="list"
+                aria-label="List view"
+                title="List view"
+                className="px-2.5"
+              >
+                <ListIcon />
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="grid"
+                aria-label="Card view"
+                title="Card view"
+                className="px-2.5"
+              >
+                <LayoutGridIcon />
+              </ToggleGroupItem>
+            </ToggleGroup>
             <Button
               size="sm"
               variant="outline"
@@ -92,7 +135,10 @@ function LibraryPage() {
                 dialog.openCreate(isExplorer ? (folder ?? null) : null, currentFolder?.name)
               }
             >
-              <FolderPlusIcon /> {isExplorer && folder ? "New subfolder" : "New folder"}
+              <FolderPlusIcon />{" "}
+              <span className="hidden @xl/main:inline">
+                {isExplorer && folder ? "New subfolder" : "New folder"}
+              </span>
             </Button>
             <NewPaperDialog folderId={isExplorer ? (folder ?? null) : null} />
           </>
@@ -130,6 +176,40 @@ function LibraryPage() {
               </>
             )}
           </div>
+        ) : layout === "grid" ? (
+          <div className="flex flex-col gap-6">
+            {subfolders.length > 0 && (
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-3">
+                {subfolders.map((sub) => (
+                  <FolderCard
+                    key={sub.id}
+                    folder={sub}
+                    actions={
+                      <FolderActionsMenuItems
+                        folder={sub}
+                        onNewSubfolder={() => dialog.openCreate(sub.id, sub.name)}
+                        onRename={() => dialog.openRename(sub.id, sub.name)}
+                      />
+                    }
+                  />
+                ))}
+              </div>
+            )}
+            {Boolean(papers.data?.length) && (
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-4">
+                {papers.data?.map((paper) => (
+                  <PaperCard
+                    key={paper.id}
+                    paper={paper}
+                    active={previewId === paper.id}
+                    showFolder={!isExplorer}
+                    folderName={paper.folderId ? folderNames.get(paper.folderId) : undefined}
+                    actions={<PaperMoveItems paperId={paper.id} folderId={paper.folderId} />}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
           <Table>
             <TableHeader>
@@ -158,9 +238,15 @@ function LibraryPage() {
                     <Link
                       to="/papers/$paperId"
                       params={{ paperId: paper.id }}
-                      className="hover:underline"
+                      search={(prev) => ({ ...prev, preview: paper.id })}
+                      className="inline-flex max-w-full items-center gap-2 hover:underline"
                     >
-                      {paper.title}
+                      {paper.sourceType === "url" ? (
+                        <GlobeIcon className="size-4 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <FileTextIcon className="size-4 shrink-0 text-muted-foreground" />
+                      )}
+                      <span className="truncate">{paper.title}</span>
                     </Link>
                   </TableCell>
                   {!isExplorer && (
@@ -186,7 +272,17 @@ function LibraryPage() {
                     {paper.createdAt.toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <PaperRowActions paperId={paper.id} folderId={paper.folderId} />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon-sm" variant="ghost">
+                          <MoreHorizontalIcon />
+                          <span className="sr-only">Paper actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-fit">
+                        <PaperMoveItems paperId={paper.id} folderId={paper.folderId} />
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -250,22 +346,13 @@ function FolderTableRow({
   );
 }
 
-function PaperRowActions({ paperId, folderId }: { paperId: string; folderId: string | null }) {
+/** Menu items for a paper (inside a dropdown): move to another folder. */
+function PaperMoveItems({ paperId, folderId }: { paperId: string; folderId: string | null }) {
   const move = useMovePapers();
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="icon-sm" variant="ghost">
-          <MoreHorizontalIcon />
-          <span className="sr-only">Paper actions</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-fit">
-        <MoveToFolderSubmenu
-          currentFolderId={folderId}
-          onSelect={(target) => move.mutate({ ids: [paperId], folderId: target })}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <MoveToFolderSubmenu
+      currentFolderId={folderId}
+      onSelect={(target) => move.mutate({ ids: [paperId], folderId: target })}
+    />
   );
 }

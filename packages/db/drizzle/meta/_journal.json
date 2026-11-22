@@ -15,6 +15,20 @@
       "when": 1795349738232,
       "tag": "0001_folders",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795351561660,
+      "tag": "0002_website_content",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795352676601,
+      "tag": "0003_paper_thumbnail",
+      "breakpoints": true
     }
   ]
 }

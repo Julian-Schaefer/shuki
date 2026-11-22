@@ -7,6 +7,9 @@ A self-hostable, open-source home for your research papers and the knowledge you
 ## Features
 
 - 📚 Personal paper library with PDF upload and storage
+- 🌐 Save websites – Shuki keeps a clean reader copy (links to PDFs are stored as PDF)
+- 👀 Live preview panel for PDFs and websites (reader view or the live page)
+- 🗃️ List or card view – cards show the first PDF page or the website image
 - 🗂️ Nested folders and tags to organize papers
 - 👥 Multi-user – the first account becomes admin, sign-ups can be closed
 - ⚙️ Background processing via a job queue (metadata, full text, embeddings – coming soon)
@@ -79,9 +82,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions, e.g. how to add a new ba
 1. Paper import: PDF text extraction, DOI/arXiv import, metadata enrichment (Crossref, arXiv, OpenAlex), PDF viewer
 2. Full-text search across papers (PostgreSQL FTS + trigram)
 3. Notes linked to papers
-4. Web clipping
-5. Embeddings, semantic search and summaries via any OpenAI-compatible provider (OpenAI, Ollama, …)
-6. Export/import (BibTeX, Markdown), sharing between users
+4. Embeddings, semantic search and summaries via any OpenAI-compatible provider (OpenAI, Ollama, …)
+5. Export/import (BibTeX, Markdown), sharing between users
 
 ## License
 

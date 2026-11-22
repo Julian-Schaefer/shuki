@@ -52,6 +52,11 @@ export const workerEnvSchema = commonSchema
   .extend(aiSchema.shape)
   .extend({
     WORKER_CONCURRENCY: z.coerce.number().int().positive().default(2),
+    /**
+     * Allow saving websites on private/internal networks (localhost, 10.x, 192.168.x, …).
+     * Off by default so users cannot make the worker reach internal services.
+     */
+    CLIPPER_ALLOW_PRIVATE_NETWORKS: booleanString.default(false),
   });
 
 export const migrateEnvSchema = commonSchema.extend(databaseSchema.shape);

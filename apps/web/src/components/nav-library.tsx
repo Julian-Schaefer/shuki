@@ -6,6 +6,7 @@ import {
   FolderIcon,
   FolderOpenIcon,
   FolderPlusIcon,
+  GlobeIcon,
   LibraryIcon,
   Loader2Icon,
   MoreHorizontalIcon,
@@ -224,7 +225,11 @@ function FolderTreeItem({ node, ctx }: { node: FolderNode; ctx: TreeContext }) {
 function PaperTreeItem({ paper, ctx }: { paper: PaperItem; ctx: TreeContext }) {
   const { isMobile } = useSidebar();
   const move = useMovePapers();
-  const Icon = isBusy(paper.status) ? Loader2Icon : FileTextIcon;
+  const Icon = isBusy(paper.status)
+    ? Loader2Icon
+    : paper.sourceType === "url"
+      ? GlobeIcon
+      : FileTextIcon;
 
   return (
     <SidebarMenuSubItem>
@@ -233,7 +238,12 @@ function PaperTreeItem({ paper, ctx }: { paper: PaperItem; ctx: TreeContext }) {
         isActive={ctx.activePaperId === paper.id}
         className="peer/paper pr-7 pl-6"
       >
-        <Link to="/papers/$paperId" params={{ paperId: paper.id }} title={paper.title}>
+        <Link
+          to="/papers/$paperId"
+          params={{ paperId: paper.id }}
+          search={(prev) => ({ ...prev, preview: paper.id })}
+          title={paper.title}
+        >
           <Icon className={cn(isBusy(paper.status) && "animate-spin")} />
           <span>{paper.title}</span>
         </Link>

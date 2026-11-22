@@ -1,6 +1,8 @@
 import { eq, file, paper } from "@shuki/db";
-import { type JobHandler, queues } from "@shuki/jobs";
+import type { JobHandler } from "@shuki/jobs";
 import type { WorkerContext } from "../context";
+import { markProcessing, recordFailure } from "../lib/paper-status";
+import { tryGenerateThumbnail } from "../lib/thumbnail";
 
 /**
  * Skeleton handler for `paper.process`. It walks the paper through the status
@@ -10,14 +12,10 @@ import type { WorkerContext } from "../context";
  * paper.enrich-metadata, paper.index and paper.embed.
  */
 export const createPaperProcessHandler =
-  ({ db, storage }: WorkerContext): JobHandler<"paper.process"> =>
+  (ctx: WorkerContext): JobHandler<"paper.process"> =>
   async ({ paperId }, job) => {
-    const [current] = await db
-      .update(paper)
-      .set({ status: "processing", error: null })
-      .where(eq(paper.id, paperId))
-      .returning({ id: paper.id });
-    if (!current) {
+    const { db, storage } = ctx;
+    if (!(await markProcessing(db, paperId))) {
       console.warn(`[paper.process] paper ${paperId} no longer exists, skipping`);
       return;
     }
@@ -29,20 +27,11 @@ export const createPaperProcessHandler =
         await object.body.cancel(); // only checking existence for now
       }
 
+      await tryGenerateThumbnail(ctx, paperId);
       await db.update(paper).set({ status: "ready" }).where(eq(paper.id, paperId));
       console.log(`[paper.process] paper ${paperId} ready (${files.length} file(s))`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      // Only the last attempt marks the paper as failed; before that it waits for a retry.
-      const isLastAttempt = job.retryCount >= (queues["paper.process"].options.retryLimit ?? 0);
-      await db
-        .update(paper)
-        .set({ status: isLastAttempt ? "failed" : "pending", error: message })
-        .where(eq(paper.id, paperId));
-      console.error(
-        `[paper.process] paper ${paperId} failed (attempt ${job.retryCount + 1})`,
-        error,
-      );
-      throw error; // let pg-boss retry according to the queue's retry policy
+      const retry = await recordFailure(db, { paperId, queue: "paper.process", job, error });
+      if (retry) throw error; // let pg-boss retry according to the queue's retry policy
     }
   };

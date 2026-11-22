@@ -5,7 +5,9 @@ import {
   DownloadIcon,
   ExternalLinkIcon,
   FolderIcon,
+  GlobeIcon,
   MoreHorizontalIcon,
+  PanelRightIcon,
   RotateCwIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -23,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { folderPath, foldersQuery } from "@/lib/folders";
+import { usePreview } from "@/lib/preview";
 import { trpc } from "@/lib/trpc";
 import { formatBytes } from "@/lib/upload";
 
@@ -42,6 +45,7 @@ function PaperPage() {
   });
 
   const folders = useQuery(foldersQuery());
+  const preview = usePreview();
   const move = useMovePapers();
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: trpc.paper.pathKey() });
@@ -99,11 +103,20 @@ function PaperPage() {
           <>
             <Button
               size="sm"
+              variant={preview.previewId === data.id ? "secondary" : "outline"}
+              onClick={() =>
+                preview.previewId === data.id ? preview.close() : preview.open(data.id)
+              }
+            >
+              <PanelRightIcon /> <span className="hidden @xl/main:inline">Preview</span>
+            </Button>
+            <Button
+              size="sm"
               variant="outline"
               disabled={reprocess.isPending || isBusy(data.status)}
               onClick={() => reprocess.mutate({ id: data.id })}
             >
-              <RotateCwIcon /> Reprocess
+              <RotateCwIcon /> <span className="hidden @xl/main:inline">Reprocess</span>
             </Button>
             <Button
               size="sm"
@@ -115,12 +128,12 @@ function PaperPage() {
                 }
               }}
             >
-              <Trash2Icon /> Delete
+              <Trash2Icon /> <span className="hidden @xl/main:inline">Delete</span>
             </Button>
           </>
         }
       />
-      <div className="grid gap-4 p-4 pt-0 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 p-4 pt-0 @3xl/main:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Card>
           <CardHeader>
             <CardTitle>Details</CardTitle>
@@ -160,7 +173,22 @@ function PaperPage() {
                 </DropdownMenu>
               </div>
             </Field>
-            <Field label="Source">{data.sourceType}</Field>
+            <Field label="Source">
+              {data.url ? (
+                <a
+                  href={data.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex max-w-full items-center gap-1.5 hover:underline"
+                >
+                  <GlobeIcon className="size-3.5 shrink-0" />
+                  <span className="truncate">{data.url}</span>
+                </a>
+              ) : (
+                data.sourceType
+              )}
+            </Field>
+            {data.venue && <Field label="Site / venue">{data.venue}</Field>}
             <Field label="Authors">
               {data.authors.length ? data.authors.map((a) => a.name).join(", ") : "—"}
             </Field>
@@ -214,7 +242,7 @@ function PaperPage() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[7rem_1fr] items-start gap-2">
+    <div className="grid grid-cols-[7rem_minmax(0,1fr)] items-start gap-2 break-words">
       <span className="text-muted-foreground">{label}</span>
       <div>{children}</div>
     </div>

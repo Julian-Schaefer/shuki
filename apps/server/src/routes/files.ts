@@ -91,6 +91,31 @@ export const filesRoutes = new Hono<AppEnv>()
     return c.json({ id: fileId, size, sha256 }, 201);
   })
 
+  /** Preview image of a paper (first PDF page or the website's image). */
+  .get("/papers/:paperId/thumbnail", async (c) => {
+    const user = c.get("user");
+    if (!user) throw new HTTPException(401);
+    const { db, storage } = c.get("services");
+
+    const found = await db.query.paper.findFirst({
+      where: and(eq(paper.id, c.req.param("paperId")), eq(paper.userId, user.id)),
+      columns: { id: true, thumbnailAt: true },
+    });
+    if (!found?.thumbnailAt) throw new HTTPException(404);
+
+    const object = await storage.get(storageKeys.paperThumbnail(user.id, found.id));
+    return new Response(object.body, {
+      headers: {
+        "Content-Type": object.contentType ?? "image/jpeg",
+        ...(object.contentLength ? { "Content-Length": String(object.contentLength) } : {}),
+        // The URL carries ?v=<thumbnailAt>, so it can be cached for long.
+        "Cache-Control": "private, max-age=604800, immutable",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "default-src 'none'",
+      },
+    });
+  })
+
   /** Download a file the current user owns. */
   .get("/files/:fileId", async (c) => {
     const user = c.get("user");

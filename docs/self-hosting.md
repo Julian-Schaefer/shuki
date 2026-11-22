@@ -96,19 +96,20 @@ Without `AI_BASE_URL` all AI features stay disabled.
 
 ## Configuration reference
 
-| Variable                                                           | Default                 | Description                                              |
-| ------------------------------------------------------------------ | ----------------------- | -------------------------------------------------------- |
-| `APP_URL`                                                          | `http://localhost:3000` | Public URL of the instance                               |
-| `PORT`                                                             | `3000`                  | Host port the app is published on                        |
-| `BETTER_AUTH_SECRET`                                               | –                       | **Required.** At least 32 characters                     |
-| `ALLOW_REGISTRATION`                                               | `true`                  | Allow sign-ups after the first (admin) account           |
-| `POSTGRES_PASSWORD`                                                | –                       | **Required.** Database password                          |
-| `S3_ENDPOINT`                                                      | `http://s3:9000`        | S3 API endpoint                                          |
-| `S3_REGION`                                                        | `us-east-1`             | S3 region                                                |
-| `S3_BUCKET`                                                        | `shuki`                 | Bucket name                                              |
-| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY`                        | –                       | **Required.** S3 credentials                             |
-| `S3_FORCE_PATH_STYLE`                                              | `true`                  | Path-style URLs (needed for most self-hosted S3 servers) |
-| `MAX_UPLOAD_MB`                                                    | `100`                   | Maximum upload size                                      |
-| `WORKER_CONCURRENCY`                                               | `2`                     | Jobs processed in parallel per worker                    |
-| `AI_BASE_URL`, `AI_API_KEY`, `AI_EMBEDDING_MODEL`, `AI_CHAT_MODEL` | –                       | Optional AI provider                                     |
-| `LOG_LEVEL`                                                        | `info`                  | `debug`, `info`, `warn`, `error`                         |
+| Variable                                                           | Default                 | Description                                                                         |
+| ------------------------------------------------------------------ | ----------------------- | ----------------------------------------------------------------------------------- |
+| `APP_URL`                                                          | `http://localhost:3000` | Public URL of the instance                                                          |
+| `PORT`                                                             | `3000`                  | Host port the app is published on                                                   |
+| `BETTER_AUTH_SECRET`                                               | –                       | **Required.** At least 32 characters                                                |
+| `ALLOW_REGISTRATION`                                               | `true`                  | Allow sign-ups after the first (admin) account                                      |
+| `POSTGRES_PASSWORD`                                                | –                       | **Required.** Database password                                                     |
+| `S3_ENDPOINT`                                                      | `http://s3:9000`        | S3 API endpoint                                                                     |
+| `S3_REGION`                                                        | `us-east-1`             | S3 region                                                                           |
+| `S3_BUCKET`                                                        | `shuki`                 | Bucket name                                                                         |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY`                        | –                       | **Required.** S3 credentials                                                        |
+| `S3_FORCE_PATH_STYLE`                                              | `true`                  | Path-style URLs (needed for most self-hosted S3 servers)                            |
+| `MAX_UPLOAD_MB`                                                    | `100`                   | Maximum upload size                                                                 |
+| `CLIPPER_ALLOW_PRIVATE_NETWORKS`                                   | `false`                 | Allow saving websites from private/internal networks (keep off on shared instances) |
+| `WORKER_CONCURRENCY`                                               | `2`                     | Jobs processed in parallel per worker                                               |
+| `AI_BASE_URL`, `AI_API_KEY`, `AI_EMBEDDING_MODEL`, `AI_CHAT_MODEL` | –                       | Optional AI provider                                                                |
+| `LOG_LEVEL`                                                        | `info`                  | `debug`, `info`, `warn`, `error`                                                    |

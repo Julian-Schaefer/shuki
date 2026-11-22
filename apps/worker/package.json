@@ -8,18 +8,25 @@
     "dev": "node --watch --env-file-if-exists=../../.env --import tsx src/index.ts",
     "build": "tsdown",
     "start": "node --env-file-if-exists=../../.env dist/index.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@mozilla/readability": "0.6.0",
     "@shuki/config": "workspace:*",
     "@shuki/db": "workspace:*",
     "@shuki/jobs": "workspace:*",
-    "@shuki/storage": "workspace:*"
+    "@shuki/storage": "workspace:*",
+    "linkedom": "0.18.15",
+    "mupdf": "1.28.6",
+    "sanitize-html": "2.18.2"
   },
   "devDependencies": {
     "@shuki/tsconfig": "workspace:*",
     "@types/node": "26.6.6",
+    "@types/sanitize-html": "2.16.2",
     "tsdown": "0.23.7",
-    "tsx": "4.23.15"
+    "tsx": "4.23.15",
+    "vitest": "5.1.1"
   }
 }

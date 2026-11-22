@@ -135,3 +135,77 @@
     font-size: 93.75%;
   }
 }
+
+/* Reader view of saved websites (sanitized article HTML). */
+@layer components {
+  .reader {
+    @apply text-[0.95rem] leading-7 text-foreground;
+    /* Long formulas, URLs and identifiers must not widen the panel. */
+    overflow-wrap: anywhere;
+  }
+  .reader :where(h1, h2, h3, h4) {
+    @apply mt-8 mb-3 font-heading font-semibold leading-tight;
+  }
+  .reader :where(h1) {
+    @apply text-2xl;
+  }
+  .reader :where(h2) {
+    @apply text-xl;
+  }
+  .reader :where(h3, h4) {
+    @apply text-lg;
+  }
+  .reader :where(p, ul, ol, blockquote, pre, table, figure) {
+    @apply my-4;
+  }
+  .reader :where(ul) {
+    @apply list-disc pl-6;
+  }
+  .reader :where(ol) {
+    @apply list-decimal pl-6;
+  }
+  .reader :where(li) {
+    @apply my-1;
+  }
+  .reader :where(a) {
+    @apply underline underline-offset-2 hover:text-primary;
+  }
+  .reader :where(img) {
+    @apply my-4 h-auto max-w-full;
+  }
+  .reader :where(figcaption) {
+    @apply mt-2 text-sm text-muted-foreground;
+  }
+  .reader :where(blockquote) {
+    @apply border-l-2 pl-4 text-muted-foreground italic;
+  }
+  .reader :where(code) {
+    @apply bg-muted px-1 py-0.5 font-mono text-sm;
+  }
+  .reader :where(pre) {
+    @apply overflow-x-auto bg-muted p-4 text-sm;
+  }
+  .reader :where(pre code) {
+    @apply bg-transparent p-0;
+  }
+  .reader :where(table) {
+    @apply block w-full overflow-x-auto text-sm;
+  }
+  .reader :where(th, td) {
+    @apply border px-2 py-1 text-left align-top;
+  }
+  .reader :where(hr) {
+    @apply my-8;
+  }
+}
+
+/* pdf.js viewer: undo Tailwind preflight sizing on rendered pages. */
+@layer components {
+  .pdfViewer canvas,
+  .pdfViewer img {
+    max-width: none;
+  }
+  .pdf-container .pdfViewer {
+    padding-block: 0.5rem;
+  }
+}

@@ -11,6 +11,10 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  build: {
+    // pdf.js (lazy-loaded preview chunk) is ~600 kB on its own.
+    chunkSizeWarningLimit: 800,
+  },
   server: {
     port: 5173,
     // Same-origin API in development → auth cookies just work.

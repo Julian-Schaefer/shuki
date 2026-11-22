@@ -7,10 +7,12 @@ export default defineConfig({
   target: "node24",
   // Bundle everything (workspace packages and npm deps) into self-contained
   // files, so the Docker image needs no node_modules.
-  noExternal: [/.*/],
-  deps: { onlyBundle: false },
-  // Optional native addon of `pg` – never installed, guarded by a try/catch.
-  external: ["pg-native"],
+  deps: {
+    alwaysBundle: [/.*/],
+    // Optional native addon of `pg` – never installed, guarded by a try/catch.
+    neverBundle: ["pg-native"],
+    onlyBundle: false,
+  },
   sourcemap: true,
   clean: true,
 });

@@ -1,0 +1,1 @@
+ALTER TABLE "paper" ADD COLUMN "thumbnail_at" timestamp with time zone;
