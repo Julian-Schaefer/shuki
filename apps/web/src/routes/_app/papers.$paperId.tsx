@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, linkOptions, useNavigate } from "@tanstack/react-router";
 import {
+  BookOpenIcon,
   CheckIcon,
   DownloadIcon,
   ExternalLinkIcon,
@@ -21,6 +22,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -101,6 +104,11 @@ function PaperPage() {
         breadcrumbs={breadcrumbs}
         actions={
           <>
+            <Button size="sm" asChild>
+              <Link to="/read/$paperId" params={{ paperId: data.id }}>
+                <BookOpenIcon /> <span className="hidden @xl/main:inline">Read</span>
+              </Link>
+            </Button>
             <Button
               size="sm"
               variant={preview.previewId === data.id ? "secondary" : "outline"}
@@ -110,26 +118,34 @@ function PaperPage() {
             >
               <PanelRightIcon /> <span className="hidden @xl/main:inline">Preview</span>
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={reprocess.isPending || isBusy(data.status)}
-              onClick={() => reprocess.mutate({ id: data.id })}
-            >
-              <RotateCwIcon /> <span className="hidden @xl/main:inline">Reprocess</span>
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              disabled={remove.isPending}
-              onClick={() => {
-                if (confirm(`Delete "${data.title}"? This cannot be undone.`)) {
-                  remove.mutate({ id: data.id });
-                }
-              }}
-            >
-              <Trash2Icon /> <span className="hidden @xl/main:inline">Delete</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon-sm" variant="outline" title="More actions">
+                  <MoreHorizontalIcon />
+                  <span className="sr-only">More actions</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-fit">
+                <DropdownMenuItem
+                  disabled={reprocess.isPending || isBusy(data.status)}
+                  onSelect={() => reprocess.mutate({ id: data.id })}
+                >
+                  <RotateCwIcon /> Reprocess
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={remove.isPending}
+                  onSelect={() => {
+                    if (confirm(`Delete "${data.title}"? This cannot be undone.`)) {
+                      remove.mutate({ id: data.id });
+                    }
+                  }}
+                >
+                  <Trash2Icon /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         }
       />

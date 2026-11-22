@@ -10,6 +10,7 @@ A self-hostable, open-source home for your research papers and the knowledge you
 - 🌐 Save websites – Shuki keeps a clean reader copy (links to PDFs are stored as PDF)
 - 👀 Live preview panel for PDFs and websites (reader view or the live page)
 - 🗃️ List or card view – cards show the first PDF page or the website image
+- 📖 Full-screen reading mode – mark a passage in a PDF or saved website and attach a note to it
 - 🗂️ Nested folders and tags to organize papers
 - 👥 Multi-user – the first account becomes admin, sign-ups can be closed
 - ⚙️ Background processing via a job queue (metadata, full text, embeddings – coming soon)

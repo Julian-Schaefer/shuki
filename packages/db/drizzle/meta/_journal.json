@@ -29,6 +29,13 @@
       "when": 1795352676601,
       "tag": "0003_paper_thumbnail",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795359629760,
+      "tag": "0004_note_anchor",
+      "breakpoints": true
     }
   ]
 }

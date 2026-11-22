@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import DOMPurify from "dompurify";
 import {
   AlertCircleIcon,
+  BookOpenIcon,
   ExternalLinkIcon,
   FileTextIcon,
   GlobeIcon,
@@ -10,7 +10,8 @@ import {
   Loader2Icon,
   XIcon,
 } from "lucide-react";
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense } from "react";
+import { ReaderView } from "@/components/reader-view";
 import { isBusy } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,6 +53,13 @@ export function PreviewPanel({ paperId }: { paperId: string }) {
             <span className="text-sm text-muted-foreground">Preview</span>
           )}
         </div>
+        {(data?.pdf || data?.website) && (
+          <Button size="icon-sm" variant="ghost" asChild>
+            <Link to="/read/$paperId" params={{ paperId }} title="Reading mode">
+              <BookOpenIcon />
+            </Link>
+          </Button>
+        )}
         {externalUrl && (
           <Button size="icon-sm" variant="ghost" asChild>
             <a href={externalUrl} target="_blank" rel="noreferrer" title="Open in new tab">
@@ -118,18 +126,6 @@ function WebsitePreview({
   website: Preview["website"];
   error: string | null;
 }) {
-  // Sanitized on the server already – sanitize again before injecting into the page.
-  const html = useMemo(
-    () =>
-      website?.html
-        ? DOMPurify.sanitize(website.html, {
-            FORBID_TAGS: ["style", "form", "input", "iframe"],
-            ADD_ATTR: ["target"],
-          })
-        : "",
-    [website?.html],
-  );
-
   return (
     <Tabs defaultValue={website ? "reader" : "live"} className="flex h-full flex-col gap-0">
       <div className="flex shrink-0 items-center gap-2 border-b px-4 py-2">
@@ -149,20 +145,9 @@ function WebsitePreview({
           {new URL(url).hostname}
         </a>
       </div>
-      <TabsContent value="reader" className="min-h-0 flex-1 overflow-auto">
-        {website ? (
-          <article className="reader mx-auto max-w-2xl px-6 py-6">
-            {website.imageUrl && (
-              <img
-                src={website.imageUrl}
-                alt=""
-                className="mb-6 max-h-64 w-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            )}
-            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized twice (server + DOMPurify) */}
-            <div dangerouslySetInnerHTML={{ __html: html }} />
-          </article>
+      <TabsContent value="reader" className="min-h-0 flex-1">
+        {website?.html ? (
+          <ReaderView html={website.html} imageUrl={website.imageUrl} />
         ) : (
           <PreviewMessage icon={<AlertCircleIcon />}>
             {error ?? "The website could not be saved."}

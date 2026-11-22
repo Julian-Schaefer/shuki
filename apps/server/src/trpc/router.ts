@@ -2,6 +2,7 @@ import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { router } from "./init";
 import { adminRouter } from "./routers/admin";
 import { folderRouter } from "./routers/folder";
+import { noteRouter } from "./routers/note";
 import { paperRouter } from "./routers/paper";
 import { systemRouter } from "./routers/system";
 import { tagRouter } from "./routers/tag";
@@ -10,6 +11,7 @@ export const appRouter = router({
   system: systemRouter,
   folder: folderRouter,
   paper: paperRouter,
+  note: noteRouter,
   tag: tagRouter,
   admin: adminRouter,
 });

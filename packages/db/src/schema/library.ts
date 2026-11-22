@@ -171,7 +171,20 @@ export const paperTag = pgTable(
   (t) => [primaryKey({ columns: [t.paperId, t.tagId] }), index().on(t.tagId)],
 );
 
-/** Placeholder – the note concept will be designed in a later step. */
+/** Rectangle relative to a PDF page, all values in 0..1 of the page size. */
+export type NoteRect = { x: number; y: number; w: number; h: number };
+
+/**
+ * Where a note is attached inside a paper. `quote` is the marked text, kept so
+ * the note stays meaningful even if the anchor can no longer be located.
+ * - `pdf`: highlighted rectangles on one page of a PDF file.
+ * - `text`: character offsets in the reader view of a saved website.
+ */
+export type NoteAnchor =
+  | { type: "pdf"; fileId: string; page: number; rects: NoteRect[]; quote: string }
+  | { type: "text"; start: number; end: number; quote: string };
+
+/** A note, optionally attached to a paper and – as an annotation – to a marked passage in it. */
 export const note = pgTable(
   "note",
   {
@@ -180,6 +193,7 @@ export const note = pgTable(
     paperId: uuid().references(() => paper.id, { onDelete: "set null" }),
     title: text().notNull().default(""),
     body: text().notNull().default(""),
+    anchor: jsonb().$type<NoteAnchor>(),
     ...timestamps,
   },
   (t) => [index().on(t.userId, t.updatedAt), index().on(t.paperId)],

@@ -205,7 +205,45 @@
   .pdfViewer img {
     max-width: none;
   }
+  /* pdf.js sizes pages for content-box; with Tailwind's border-box the page border
+     squeezes the canvas while the text layer keeps its size, so text selection and
+     highlights drift away from the rendered text. */
+  .pdfViewer .page {
+    box-sizing: content-box;
+  }
   .pdf-container .pdfViewer {
     padding-block: 0.5rem;
   }
+}
+
+/* Notes: marked passages in PDFs (overlay divs) and the reader view (CSS Highlight API). */
+@layer components {
+  .shuki-highlights {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+  }
+  .shuki-highlights > div {
+    position: absolute;
+    border-radius: 2px;
+    background-color: rgb(250 204 21 / 0.4);
+    transition: background-color 150ms;
+  }
+  .shuki-highlights > div.active {
+    background-color: rgb(250 204 21 / 0.8);
+  }
+}
+
+::highlight(shuki-note) {
+  background-color: rgb(250 204 21 / 0.35);
+}
+::highlight(shuki-note-active) {
+  background-color: rgb(250 204 21 / 0.7);
+}
+.dark ::highlight(shuki-note) {
+  background-color: rgb(250 204 21 / 0.25);
+}
+.dark ::highlight(shuki-note-active) {
+  background-color: rgb(250 204 21 / 0.45);
 }
