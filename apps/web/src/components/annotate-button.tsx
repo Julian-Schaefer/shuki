@@ -1,10 +1,7 @@
 import { MessageSquarePlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-/**
- * Floating "Note" button shown below a text selection. Positioned absolutely
- * inside the scroll container so it moves with the content.
- */
+/** Lives inside the scroll container so it moves with the content. */
 export function AnnotateButton({
   top,
   left,
@@ -28,7 +25,6 @@ export function AnnotateButton({
   );
 }
 
-/** Position for the button: centered below the last line of the selection. */
 export function buttonPosition(range: Range, scrollContainer: HTMLElement) {
   const rects = [...range.getClientRects()].filter((rect) => rect.width > 0 && rect.height > 0);
   const last = rects.at(-1) ?? range.getBoundingClientRect();

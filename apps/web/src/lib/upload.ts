@@ -1,4 +1,3 @@
-/** Streams a PDF to the server, which stores it in S3 and enqueues processing. */
 export async function uploadPaperFile(paperId: string, file: File): Promise<void> {
   const response = await fetch(`/api/papers/${paperId}/file`, {
     method: "PUT",

@@ -5,8 +5,7 @@
 #   docker run <image> worker    – background jobs
 #   docker run <image> migrate   – apply database migrations and exit
 #
-# Server and worker are bundled into self-contained files at build time,
-# so the runtime image contains no node_modules.
+# Server and worker are bundled, so the runtime image has no node_modules.
 
 ARG NODE_VERSION=26
 
@@ -15,7 +14,6 @@ ARG PNPM_VERSION=12.21.0
 RUN npm install -g pnpm@${PNPM_VERSION}
 WORKDIR /app
 
-# Install dependencies first for better layer caching.
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/server/package.json apps/server/
 COPY apps/worker/package.json apps/worker/

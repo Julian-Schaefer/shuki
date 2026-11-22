@@ -23,7 +23,6 @@ type Preview = RouterOutputs["paper"]["preview"];
 // pdf.js is large – only load it once a PDF is actually shown.
 const PdfViewer = lazy(() => import("@/components/pdf-viewer"));
 
-/** Right-hand panel with a live preview of a paper: its PDF or the saved website. */
 export function PreviewPanel({ paperId }: { paperId: string }) {
   const { close } = usePreview();
   const preview = useQuery({

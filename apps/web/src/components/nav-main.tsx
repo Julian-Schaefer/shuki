@@ -21,14 +21,12 @@ export type NavSubItem = {
 export type NavItem = {
   title: string;
   icon: ReactNode;
-  /** Path prefix that marks this section as active, e.g. "/settings". */
+  /** e.g. "/settings" */
   match: (pathname: string) => boolean;
-  /** Without sub-items the entry is a plain link. */
   link?: LinkOptions;
   items?: NavSubItem[];
 };
 
-/** Compares a sub-item's target with the current location (path and search). */
 function useIsLinkActive() {
   const location = useLocation();
   return (link: LinkOptions) => {
@@ -47,7 +45,6 @@ export function NavMain({
 }: {
   label: string;
   items: NavItem[];
-  /** Custom entries rendered before `items` (e.g. the library with its folder tree). */
   leading?: ReactNode;
 }) {
   const { pathname } = useLocation();
@@ -100,7 +97,6 @@ export function NavMain({
   );
 }
 
-/** Collapsible section that opens itself whenever one of its routes becomes active. */
 function NavCollapsible({ active, children }: { active: boolean; children: ReactNode }) {
   const [open, setOpen] = useState(active);
   useEffect(() => {

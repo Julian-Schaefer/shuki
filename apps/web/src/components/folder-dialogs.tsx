@@ -19,7 +19,6 @@ export type FolderDialogState =
   | { mode: "rename"; id: string; name: string }
   | null;
 
-/** Create or rename a folder. Render once and drive it with `state`. */
 export function FolderDialog({
   state,
   onClose,
@@ -99,7 +98,6 @@ export function FolderDialog({
   );
 }
 
-/** Small hook bundling dialog state, so callers just call `openCreate` / `openRename`. */
 export function useFolderDialog() {
   const [state, setState] = useState<FolderDialogState>(null);
   return {

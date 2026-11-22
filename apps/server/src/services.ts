@@ -3,7 +3,6 @@ import { createDb, type Database } from "@shuki/db";
 import { createBoss, type PgBoss } from "@shuki/jobs";
 import { Storage } from "@shuki/storage";
 
-/** Long-lived singletons shared by HTTP routes and tRPC procedures. */
 export type Services = {
   env: ServerEnv;
   db: Database;

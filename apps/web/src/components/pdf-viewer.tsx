@@ -43,13 +43,11 @@ GlobalWorkerOptions.workerSrc = workerSrc;
 
 type FindStatus = { current: number; total: number; notFound: boolean };
 
-/** A marked passage drawn on top of the PDF. */
 export type PdfHighlight = { id: string; page: number; rects: NoteRect[] };
-/** The user's current text selection, in page-relative coordinates. */
 export type PdfSelection = { page: number; rects: NoteRect[]; quote: string };
 export type PdfViewerHandle = { scrollTo: (page: number, y: number) => void };
 
-/** Content box of a page – the area canvas, text layer and our highlights share. */
+/** Content box of a page, shared by canvas, text layer and highlights. */
 function pageBox(page: HTMLElement) {
   const rect = page.getBoundingClientRect();
   return {
@@ -60,7 +58,7 @@ function pageBox(page: HTMLElement) {
   };
 }
 
-/** Joins the many small rects of a selection into one rect per line. */
+/** One rect per line. */
 function mergeRects(rects: NoteRect[]): NoteRect[] {
   const sorted = [...rects].sort((a, b) => a.y - b.y || a.x - b.x);
   const merged: NoteRect[] = [];
@@ -91,7 +89,6 @@ function mergeRects(rects: NoteRect[]): NoteRect[] {
   }));
 }
 
-/** Reads the current selection if it lies on a page of this viewer. */
 function readSelection(viewerElement: HTMLElement): { data: PdfSelection; range: Range } | null {
   const selection = document.getSelection();
   if (!selection || selection.isCollapsed || !selection.rangeCount) return null;
@@ -108,7 +105,7 @@ function readSelection(viewerElement: HTMLElement): { data: PdfSelection; range:
   const box = pageBox(page);
   const rects = mergeRects(
     [...range.getClientRects()]
-      // Lines only: skip empty rects and whole blocks (e.g. pdf.js' end-of-content marker).
+      // Skip empty rects and whole blocks like pdf.js' end-of-content marker.
       .filter((rect) => rect.width > 1 && rect.height > 1 && rect.height < box.height * 0.1)
       .map((rect) => {
         const left = Math.max(rect.left, box.left);
@@ -128,7 +125,6 @@ function readSelection(viewerElement: HTMLElement): { data: PdfSelection; range:
   return { data: { page: Number(page.dataset.pageNumber), rects, quote }, range };
 }
 
-/** Draws the highlights of one page into an overlay that scales with the page. */
 function paintHighlights(
   page: HTMLElement,
   pageNumber: number,
@@ -167,12 +163,6 @@ function paintAllHighlights(
   }
 }
 
-/**
- * PDF viewer built on pdf.js: continuous scrolling with lazy page rendering,
- * selectable text, clickable links, zoom, page navigation and full-text search.
- * With `onAnnotate`, selected text can be turned into a note; `highlights` are
- * drawn on top of the pages.
- */
 export default function PdfViewer({
   url,
   fileName,
@@ -213,7 +203,6 @@ export default function PdfViewer({
   const [findStatus, setFindStatus] = useState<FindStatus | null>(null);
   const findInputRef = useRef<HTMLInputElement>(null);
 
-  // Set up pdf.js and load the document.
   useEffect(() => {
     const container = containerRef.current;
     const viewerElement = viewerRef.current;
@@ -305,7 +294,6 @@ export default function PdfViewer({
     };
   }, [url]);
 
-  // Redraw highlights whenever notes change.
   useEffect(() => {
     highlightsRef.current = highlights ?? [];
     activeRef.current = activeHighlightId ?? null;
@@ -331,7 +319,6 @@ export default function PdfViewer({
     [],
   );
 
-  // Offer the "Note" button for a fresh selection; a plain click may hit a highlight.
   const checkSelection = () => {
     const container = containerRef.current;
     const viewerElement = viewerRef.current;
@@ -363,7 +350,6 @@ export default function PdfViewer({
     if (hit) onHighlightClick(hit.id);
   };
 
-  // Hide the button once the selection is gone.
   useEffect(() => {
     if (!pendingSelection) return;
     const onChange = () => {
@@ -404,7 +390,6 @@ export default function PdfViewer({
     findInputRef.current?.select();
   };
 
-  // Ctrl/Cmd+F inside the viewer opens the search bar instead of the browser's.
   const onKeyDown = (event: KeyboardEvent) => {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
       event.preventDefault();

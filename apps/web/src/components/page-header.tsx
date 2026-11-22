@@ -13,7 +13,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export type Crumb = { label: ReactNode; link?: LinkOptions };
 
-/** Page header from the sidebar-07 block: trigger, separator, breadcrumb – plus page actions. */
 export function PageHeader({
   breadcrumbs,
   actions,

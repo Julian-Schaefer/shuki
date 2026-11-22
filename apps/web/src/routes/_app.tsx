@@ -7,7 +7,6 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { sessionQuery } from "@/lib/auth-client";
 
-/** Layout for all signed-in pages. Redirects to /login without a session. */
 export const Route = createFileRoute("/_app")({
   // `preview` = paper shown in the right-hand preview panel; kept while navigating.
   validateSearch: z.object({ preview: z.uuid().optional() }),

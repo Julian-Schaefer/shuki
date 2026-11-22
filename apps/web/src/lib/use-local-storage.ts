@@ -1,9 +1,5 @@
 import { useCallback, useState } from "react";
 
-/**
- * Per-browser UI preference in localStorage. Falls back to the default when
- * storage is unavailable (private mode, blocked site data).
- */
 export function useLocalStorage<T extends string>(
   key: string,
   defaultValue: T,
@@ -24,7 +20,7 @@ export function useLocalStorage<T extends string>(
       try {
         localStorage.setItem(key, next);
       } catch {
-        // Not persisted – fine, the state still changes for this session.
+        // Storage unavailable – keep the in-memory value.
       }
     },
     [key],

@@ -43,7 +43,6 @@ export const paperSourceType = pgEnum("paper_source_type", [
   "url",
 ]);
 
-/** Lifecycle of background processing for a paper. */
 export const processingStatus = pgEnum("processing_status", [
   "pending",
   "processing",
@@ -53,11 +52,7 @@ export const processingStatus = pgEnum("processing_status", [
 
 export type PaperAuthor = { name: string; orcid?: string };
 
-/**
- * Hierarchical folders for organizing the library. A paper lives in at most
- * one folder (or in the library root); tags cover cross-cutting groupings.
- * Deleting a folder deletes its subfolders and moves contained papers to the root.
- */
+/** Deleting a folder deletes its subfolders and moves its papers to the root. */
 export const folder = pgTable(
   "folder",
   {
@@ -91,7 +86,7 @@ export const paper = pgTable(
     sourceType: paperSourceType().notNull().default("manual"),
     status: processingStatus().notNull().default("pending"),
     error: text(),
-    /** When the preview image was last generated (null = none). Also used for cache busting. */
+    /** Also used for cache busting. */
     thumbnailAt: timestamp({ withTimezone: true }),
     ...timestamps,
   },
@@ -105,7 +100,6 @@ export const paper = pgTable(
   ],
 );
 
-/** Files stored in S3 (PDFs, later thumbnails or supplementary material). */
 export const file = pgTable(
   "file",
   {
@@ -122,24 +116,17 @@ export const file = pgTable(
   (t) => [index().on(t.paperId), index().on(t.userId)],
 );
 
-/**
- * Extracted full text of a paper, filled by the worker. The generated
- * `searchVector` powers Postgres full-text search.
- */
 export const paperContent = pgTable(
   "paper_content",
   {
     paperId: uuid()
       .primaryKey()
       .references(() => paper.id, { onDelete: "cascade" }),
-    /** Plain text (PDF text or website article) – feeds full-text search. */
     content: text().notNull(),
     searchVector: tsvector().generatedAlwaysAs(sql`to_tsvector('simple', coalesce(content, ''))`),
-    /** Sanitized reader-view HTML of a saved website. */
     html: text(),
-    /** Preview image of a website (og:image), absolute URL. */
     imageUrl: text(),
-    /** Whether the original page allows being embedded in an iframe (live preview). */
+    /** Whether the page allows being framed (live preview). */
     embeddable: boolean(),
     ...timestamps,
   },
@@ -171,20 +158,14 @@ export const paperTag = pgTable(
   (t) => [primaryKey({ columns: [t.paperId, t.tagId] }), index().on(t.tagId)],
 );
 
-/** Rectangle relative to a PDF page, all values in 0..1 of the page size. */
+/** Relative to the page, 0..1. */
 export type NoteRect = { x: number; y: number; w: number; h: number };
 
-/**
- * Where a note is attached inside a paper. `quote` is the marked text, kept so
- * the note stays meaningful even if the anchor can no longer be located.
- * - `pdf`: highlighted rectangles on one page of a PDF file.
- * - `text`: character offsets in the reader view of a saved website.
- */
+/** `quote` keeps the note meaningful if the anchor can't be located anymore. */
 export type NoteAnchor =
   | { type: "pdf"; fileId: string; page: number; rects: NoteRect[]; quote: string }
   | { type: "text"; start: number; end: number; quote: string };
 
-/** A note, optionally attached to a paper and – as an annotation – to a marked passage in it. */
 export const note = pgTable(
   "note",
   {

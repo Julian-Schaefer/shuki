@@ -4,12 +4,10 @@ const booleanString = z
   .enum(["true", "false", "1", "0"])
   .transform((value) => value === "true" || value === "1");
 
-/** Shared by every process that talks to the database. */
 const databaseSchema = z.object({
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
 });
 
-/** S3-compatible object storage (MinIO, AWS S3, Cloudflare R2, Backblaze B2, ...). */
 const storageSchema = z.object({
   S3_ENDPOINT: z.url().optional(),
   S3_REGION: z.string().min(1).default("us-east-1"),
@@ -19,7 +17,6 @@ const storageSchema = z.object({
   S3_FORCE_PATH_STYLE: booleanString.default(true),
 });
 
-/** Optional OpenAI-compatible AI provider (OpenAI, Ollama, LM Studio, vLLM, ...). */
 const aiSchema = z.object({
   AI_BASE_URL: z.url().optional(),
   AI_API_KEY: z.string().optional(),
@@ -41,7 +38,7 @@ export const serverEnvSchema = commonSchema
     APP_URL: z.url().default("http://localhost:3000"),
     BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
     ALLOW_REGISTRATION: booleanString.default(true),
-    /** Directory of the built web app. Served statically when set. */
+    /** Served statically when set. */
     WEB_DIST_DIR: z.string().optional(),
     MAX_UPLOAD_MB: z.coerce.number().int().positive().default(100),
   });
@@ -52,10 +49,7 @@ export const workerEnvSchema = commonSchema
   .extend(aiSchema.shape)
   .extend({
     WORKER_CONCURRENCY: z.coerce.number().int().positive().default(2),
-    /**
-     * Allow saving websites on private/internal networks (localhost, 10.x, 192.168.x, …).
-     * Off by default so users cannot make the worker reach internal services.
-     */
+    /** Off by default so users can't make the worker reach internal services. */
     CLIPPER_ALLOW_PRIVATE_NETWORKS: booleanString.default(false),
   });
 
@@ -66,15 +60,11 @@ export type WorkerEnv = z.infer<typeof workerEnvSchema>;
 export type MigrateEnv = z.infer<typeof migrateEnvSchema>;
 export type StorageEnv = z.infer<typeof storageSchema>;
 
-/**
- * Parses environment variables against a schema and exits with a readable
- * error message if something is missing or invalid.
- */
 export function loadEnv<T extends z.ZodType>(
   schema: T,
   source: Record<string, string | undefined> = process.env,
 ): z.infer<T> {
-  // Treat empty strings like unset variables so `.env` templates with blank values work.
+  // Blank values in `.env` count as unset.
   const cleaned = Object.fromEntries(
     Object.entries(source).filter(([, value]) => value !== undefined && value !== ""),
   );

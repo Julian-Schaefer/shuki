@@ -10,7 +10,6 @@ const folderName = z
   .max(200)
   .refine((name) => !name.includes("/"), "Folder names cannot contain '/'");
 
-/** Throws NOT_FOUND unless the folder exists and belongs to the user. */
 export async function assertFolderOwned(db: Database, userId: string, folderId: string) {
   const found = await db.query.folder.findFirst({
     where: and(eq(folder.id, folderId), eq(folder.userId, userId)),
@@ -19,7 +18,6 @@ export async function assertFolderOwned(db: Database, userId: string, folderId: 
   if (!found) throw new TRPCError({ code: "NOT_FOUND", message: "Folder not found" });
 }
 
-/** Maps the unique (parent, name) violation to a readable error. */
 async function withUniqueName<T>(run: () => Promise<T>): Promise<T> {
   try {
     return await run();
@@ -37,7 +35,6 @@ async function withUniqueName<T>(run: () => Promise<T>): Promise<T> {
 }
 
 export const folderRouter = router({
-  /** All folders of the user as a flat list – the client builds the tree. */
   list: protectedProcedure.query(({ ctx }) =>
     ctx.db
       .select({ id: folder.id, parentId: folder.parentId, name: folder.name })
@@ -73,7 +70,6 @@ export const folderRouter = router({
       if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
     }),
 
-  /** Moves a folder below another folder (or to the root with `parentId: null`). */
   move: protectedProcedure
     .input(z.object({ id: z.uuid(), parentId: z.uuid().nullable() }))
     .mutation(async ({ ctx, input }) => {
@@ -104,7 +100,6 @@ export const folderRouter = router({
       );
     }),
 
-  /** Deletes a folder and its subfolders. Contained papers move to the library root. */
   delete: protectedProcedure.input(z.object({ id: z.uuid() })).mutation(async ({ ctx, input }) => {
     const [deleted] = await ctx.db
       .delete(folder)

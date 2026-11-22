@@ -4,11 +4,7 @@ import { BookOpenTextIcon } from "lucide-react";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { trpc } from "@/lib/trpc";
 
-/**
- * Sidebar header in the style of sidebar-07's team switcher. Shuki has a
- * single library per user today, so it links home instead of switching –
- * shared libraries (roadmap) can turn it into a real switcher later.
- */
+/** Links home for now; can become a library switcher once libraries are shareable. */
 export function SidebarBrand() {
   const info = useQuery(trpc.system.info.queryOptions());
   return (

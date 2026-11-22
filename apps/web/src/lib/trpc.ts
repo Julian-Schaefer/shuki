@@ -29,5 +29,4 @@ export const trpcClient = createTRPCClient<AppRouter>({
   ],
 });
 
-/** Usage: `useQuery(trpc.paper.list.queryOptions())` */
 export const trpc = createTRPCOptionsProxy<AppRouter>({ client: trpcClient, queryClient });

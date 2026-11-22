@@ -27,7 +27,6 @@ import { useLocalStorage } from "@/lib/use-local-storage";
 
 const PdfViewer = lazy(() => import("@/components/pdf-viewer"));
 
-/** Full-screen reading mode: the document on the left, notes on the right. */
 export const Route = createFileRoute("/read/$paperId")({
   beforeLoad: async ({ context, location }) => {
     const session = await context.queryClient.ensureQueryData(sessionQuery);

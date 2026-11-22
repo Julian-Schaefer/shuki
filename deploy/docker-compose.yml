@@ -49,8 +49,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # Bundled S3-compatible storage. To use an external provider (AWS S3, R2,
-  # B2, …) set S3_ENDPOINT and credentials in .env and remove this service.
+  # For external S3 (AWS, R2, B2, …) set S3_* in .env and remove this service.
   s3:
     image: rustfs/rustfs:1.0.6
     restart: unless-stopped

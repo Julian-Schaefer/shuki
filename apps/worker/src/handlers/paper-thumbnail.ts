@@ -3,7 +3,6 @@ import { enqueue, type JobHandler } from "@shuki/jobs";
 import type { WorkerContext } from "../context";
 import { generateThumbnail } from "../lib/thumbnail";
 
-/** `paper.thumbnail`: (re)creates a preview image on its own, e.g. for older papers. */
 export const createThumbnailHandler =
   (ctx: WorkerContext): JobHandler<"paper.thumbnail"> =>
   async ({ paperId }) => {
@@ -11,11 +10,7 @@ export const createThumbnailHandler =
     if (created) console.log(`[paper.thumbnail] paper ${paperId}: thumbnail created`);
   };
 
-/**
- * Queues thumbnails for papers that are ready but have none yet – covers papers
- * saved before thumbnails existed. Runs on worker start; duplicates are avoided
- * with a singleton key per paper.
- */
+/** Backfills papers saved before thumbnails existed. */
 export async function backfillThumbnails(ctx: WorkerContext): Promise<void> {
   const missing = await ctx.db
     .select({ id: paper.id })
@@ -24,7 +19,6 @@ export async function backfillThumbnails(ctx: WorkerContext): Promise<void> {
       and(
         eq(paper.status, "ready"),
         isNull(paper.thumbnailAt),
-        // Only papers that can have a preview: a PDF or a website image.
         or(
           exists(
             ctx.db

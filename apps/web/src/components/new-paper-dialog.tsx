@@ -24,10 +24,6 @@ type NewPaper =
   | { source: "pdf"; title: string; file: File | null }
   | { source: "website"; title: string; url: string };
 
-/**
- * Adds a paper – a PDF (or a manual entry) or a website – into `folderId` when
- * given, otherwise into the library root. Opens the preview afterwards.
- */
 export function NewPaperDialog({ folderId = null }: { folderId?: string | null }) {
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<Source>("pdf");

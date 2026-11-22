@@ -11,30 +11,19 @@ type QueueDefinition<S extends z.ZodType> = {
 
 const defineQueue = <S extends z.ZodType>(definition: QueueDefinition<S>) => definition;
 
-/**
- * Every background job Shuki knows about. The server only enqueues, the
- * worker only consumes – both share these definitions so payloads stay typed
- * and validated on both ends.
- *
- * Planned queues (see roadmap): paper.ingest-pdf, paper.enrich-metadata,
- * paper.index, paper.embed, paper.summarize.
- */
+/** Shared by server (enqueue) and worker (consume) so payloads stay typed and validated. */
 export const queues = {
-  /** Skeleton job: runs after a paper was created or a file was uploaded. */
   "paper.process": defineQueue({
     schema: z.object({ paperId: z.uuid() }),
     options: { retryLimit: 3, retryDelay: 10, retryBackoff: true, expireInSeconds: 15 * 60 },
   }),
-  /** Fetches a saved website and extracts a reader view, text and metadata. */
   "paper.clip-url": defineQueue({
     schema: z.object({
       paperId: z.uuid(),
-      /** Replace the placeholder title with the page title. */
       replaceTitle: z.boolean().default(false),
     }),
     options: { retryLimit: 2, retryDelay: 30, retryBackoff: true, expireInSeconds: 5 * 60 },
   }),
-  /** (Re)creates a paper's preview image – used to backfill existing papers. */
   "paper.thumbnail": defineQueue({
     schema: z.object({ paperId: z.uuid() }),
     options: { retryLimit: 1, retryDelay: 60, expireInSeconds: 5 * 60 },
@@ -48,12 +37,8 @@ export const queueNames = Object.keys(queues) as QueueName[];
 
 export type CreateBossOptions = {
   databaseUrl: string;
-  /** Name reported to Postgres (`application_name`) and pg-boss's instance registry. */
   applicationName: string;
-  /**
-   * Only one kind of process should run maintenance and cron scheduling.
-   * The worker does; the server is a pure producer.
-   */
+  /** Only the worker runs maintenance and cron; the server just enqueues. */
   maintenance: boolean;
   max?: number;
 };
@@ -70,7 +55,6 @@ export function createBoss(options: CreateBossOptions): PgBoss {
   });
 }
 
-/** Creates (or updates) every queue. Safe to call on each start. */
 export async function ensureQueues(boss: PgBoss): Promise<void> {
   const existing = new Set((await boss.getQueues(queueNames)).map((queue) => queue.name));
   for (const name of queueNames) {
@@ -83,7 +67,6 @@ export async function ensureQueues(boss: PgBoss): Promise<void> {
   }
 }
 
-/** Typed, validated `boss.send`. */
 export async function enqueue<Q extends QueueName>(
   boss: PgBoss,
   name: Q,
@@ -99,10 +82,6 @@ export type JobHandler<Q extends QueueName> = (
   job: Job<unknown>,
 ) => Promise<void>;
 
-/**
- * Registers a handler for a queue. Payloads are validated before the handler
- * runs; invalid payloads fail the job without retry noise in the handler.
- */
 export async function registerWorker<Q extends QueueName>(
   boss: PgBoss,
   name: Q,

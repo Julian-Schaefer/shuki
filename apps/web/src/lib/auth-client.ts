@@ -13,7 +13,6 @@ export const authClient = createAuthClient({
 
 export type Session = typeof authClient.$Infer.Session;
 
-/** Session as a cached query – used by route guards and components alike. */
 export const sessionQuery = queryOptions({
   queryKey: ["auth", "session"],
   queryFn: async () => {

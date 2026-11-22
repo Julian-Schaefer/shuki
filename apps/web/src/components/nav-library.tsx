@@ -38,27 +38,21 @@ import { cn } from "@/lib/utils";
 type LibrarySearch = { view?: string; tag?: string; folder?: string };
 type PaperItem = RouterOutputs["paper"]["list"][number];
 
-/** Everything the recursive tree needs, computed once in NavLibrary. */
 type TreeContext = {
   dialog: ReturnType<typeof useFolderDialog>;
   papersByFolder: Map<string | null, PaperItem[]>;
-  /** Folders that must be expanded to reveal the current folder or paper. */
+  /** Expanded to reveal the current folder or paper. */
   expandIds: Set<string>;
   activeFolderId: string | undefined;
   activePaperId: string | undefined;
 };
 
-/**
- * "Library" entry of the workspace navigation. Like the collapsible items of
- * sidebar-07, but the sub-items are the library's folder tree.
- */
 export function NavLibrary() {
   const location = useLocation();
   const folders = useQuery(foldersQuery());
   const dialog = useFolderDialog();
   const rows = folders.data ?? [];
   const tree = buildFolderTree(rows);
-  // All papers (id, title, folder) to place them in the tree.
   const papers = useQuery({
     ...trpc.paper.list.queryOptions(),
     refetchInterval: (query) => (query.state.data?.some((p) => isBusy(p.status)) ? 3000 : false),
@@ -144,7 +138,6 @@ function FolderTreeItem({ node, ctx }: { node: FolderNode; ctx: TreeContext }) {
   const { dialog } = ctx;
   const papers = ctx.papersByFolder.get(node.id) ?? [];
   const hasChildren = node.children.length > 0 || papers.length > 0;
-  // Expand automatically when the current folder or paper lies inside this folder.
   const shouldExpand = ctx.expandIds.has(node.id);
   const [open, setOpen] = useState(shouldExpand);
   useEffect(() => {

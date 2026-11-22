@@ -10,9 +10,7 @@ export type ExtractedArticle = {
   authors: { name: string }[];
   doi: string | null;
   year: number | null;
-  /** Sanitized reader-view HTML. */
   html: string;
-  /** Plain text for full-text search. */
   text: string;
 };
 
@@ -26,7 +24,6 @@ function absolutize(value: string, base: string): string | null {
   }
 }
 
-/** Reader-view HTML may only contain harmless markup – no scripts, styles, frames or forms. */
 function sanitize(html: string): string {
   return sanitizeHtml(html, {
     allowedTags: [
@@ -51,7 +48,7 @@ function sanitize(html: string): string {
     allowedSchemes: ["http", "https", "mailto"],
     allowedSchemesByTag: { img: ["http", "https", "data"] },
     transformTags: {
-      // In-page anchors (footnotes, TOC) point nowhere in the reader view – keep just the text.
+      // In-page anchors point nowhere in the reader view.
       a: (tagName, attribs) =>
         !attribs.href || attribs.href.startsWith("#")
           ? { tagName: "span", attribs: {} }
@@ -63,7 +60,7 @@ function sanitize(html: string): string {
   });
 }
 
-/** First reasonably large image of the article – fallback when a page has no og:image. */
+/** Fallback when a page has no og:image. */
 function firstContentImage(html: string, url: string): string | null {
   for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
     const tag = match[0];
@@ -76,11 +73,10 @@ function firstContentImage(html: string, url: string): string | null {
   return null;
 }
 
-/** Extracts a readable article plus metadata (Open Graph, Highwire `citation_*`) from HTML. */
 export function extractArticle(html: string, url: string): ExtractedArticle {
   const { document } = parseHTML(html);
 
-  // Make links and images absolute so the reader view works outside the original site.
+  // The reader view lives outside the original site.
   for (const element of document.querySelectorAll("[href], [src], [srcset]")) {
     for (const attribute of ["href", "src"]) {
       const value = element.getAttribute(attribute);

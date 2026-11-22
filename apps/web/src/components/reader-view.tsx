@@ -16,7 +16,6 @@ export type TextHighlight = { id: string; start: number; end: number; quote: str
 export type TextSelection = Omit<TextAnchor, "type">;
 export type ReaderViewHandle = { scrollTo: (highlight: TextHighlight) => void };
 
-/** Character offset of a DOM position within `root`'s text. */
 function textOffset(root: Node, node: Node, offset: number): number {
   const range = document.createRange();
   range.selectNodeContents(root);
@@ -24,7 +23,6 @@ function textOffset(root: Node, node: Node, offset: number): number {
   return range.toString().length;
 }
 
-/** DOM range for character offsets within `root`'s text. */
 function rangeFromOffsets(root: Node, start: number, end: number): Range | null {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const range = document.createRange();
@@ -45,7 +43,7 @@ function rangeFromOffsets(root: Node, start: number, end: number): Range | null 
   return null;
 }
 
-/** Finds a highlight's range; falls back to searching its quote if the text shifted. */
+/** Falls back to searching the quote if the text shifted. */
 function locate(root: Node, highlight: TextHighlight): Range | null {
   const range = rangeFromOffsets(root, highlight.start, highlight.end);
   if (range?.toString().startsWith(highlight.quote)) return range;
@@ -55,7 +53,7 @@ function locate(root: Node, highlight: TextHighlight): Range | null {
     : rangeFromOffsets(root, index, index + (highlight.end - highlight.start));
 }
 
-/** Text position under the pointer (`caretRangeFromPoint` for older Safari). */
+/** `caretRangeFromPoint` for older Safari. */
 function caretAt(x: number, y: number): { node: Node; offset: number } | null {
   if ("caretPositionFromPoint" in document) {
     const position = document.caretPositionFromPoint(x, y);
@@ -67,11 +65,7 @@ function caretAt(x: number, y: number): { node: Node; offset: number } | null {
 
 const supportsHighlights = () => typeof CSS !== "undefined" && "highlights" in CSS;
 
-/**
- * Reader view of a saved website. With `onAnnotate`, selected text can be
- * turned into a note; `highlights` are marked via the CSS Custom Highlight API,
- * which leaves the article's DOM untouched.
- */
+/** Highlights use the CSS Custom Highlight API, so the article DOM stays untouched. */
 export function ReaderView({
   html,
   imageUrl,
@@ -100,7 +94,7 @@ export function ReaderView({
     left: number;
   } | null>(null);
 
-  // Sanitized on the server already – sanitize again before injecting into the page.
+  // Defense in depth: the server sanitized it already.
   const cleanHtml = useMemo(
     () =>
       DOMPurify.sanitize(html, {

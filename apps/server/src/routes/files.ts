@@ -8,10 +8,7 @@ import type { AppEnv } from "../app";
 
 const ALLOWED_MIME_TYPES = new Set(["application/pdf"]);
 
-/**
- * Wraps a request body so that size and SHA-256 are computed while streaming
- * and the upload aborts as soon as the size limit is exceeded.
- */
+/** Computes size and SHA-256 while streaming; aborts once the size limit is exceeded. */
 function meteredStream(body: ReadableStream<Uint8Array>, maxBytes: number) {
   const hash = createHash("sha256");
   let size = 0;
@@ -32,13 +29,7 @@ function meteredStream(body: ReadableStream<Uint8Array>, maxBytes: number) {
 }
 
 export const filesRoutes = new Hono<AppEnv>()
-  /**
-   * Upload a file for a paper. The raw file is the request body (no multipart),
-   * which lets us stream it straight to S3.
-   *   PUT /api/papers/:paperId/file
-   *   Content-Type: application/pdf
-   *   X-File-Name: <url-encoded file name>
-   */
+  /** Raw body (no multipart) so it streams straight to S3; file name in `X-File-Name`. */
   .put("/papers/:paperId/file", async (c) => {
     const user = c.get("user");
     if (!user) throw new HTTPException(401);
@@ -91,7 +82,6 @@ export const filesRoutes = new Hono<AppEnv>()
     return c.json({ id: fileId, size, sha256 }, 201);
   })
 
-  /** Preview image of a paper (first PDF page or the website's image). */
   .get("/papers/:paperId/thumbnail", async (c) => {
     const user = c.get("user");
     if (!user) throw new HTTPException(401);
@@ -116,7 +106,6 @@ export const filesRoutes = new Hono<AppEnv>()
     });
   })
 
-  /** Download a file the current user owns. */
   .get("/files/:fileId", async (c) => {
     const user = c.get("user");
     if (!user) throw new HTTPException(401);

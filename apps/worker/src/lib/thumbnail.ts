@@ -5,10 +5,7 @@ import { fetchImage } from "./fetch-page";
 
 const THUMBNAIL_WIDTH = 480;
 
-/**
- * Renders the first page of a PDF as JPEG. mupdf (WebAssembly) is loaded on
- * first use so workers that never see a PDF don't pay for it.
- */
+/** mupdf (WASM) is loaded lazily so workers without PDFs don't pay for it. */
 export async function renderPdfThumbnail(pdf: Uint8Array): Promise<Uint8Array> {
   const mupdf = await import("mupdf");
   const document = mupdf.Document.openDocument(pdf, "application/pdf");
@@ -35,11 +32,7 @@ async function readAll(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> 
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-/**
- * Creates the preview image of a paper: the first page of its PDF, or the
- * website's preview image (downloaded once, so cards never hotlink).
- * Returns false when the paper has nothing to show.
- */
+/** Website images are stored so cards never hotlink. */
 export async function generateThumbnail(ctx: WorkerContext, paperId: string): Promise<boolean> {
   const { db, storage, env } = ctx;
   const current = await db.query.paper.findFirst({

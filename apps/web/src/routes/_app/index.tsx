@@ -38,10 +38,7 @@ import { usePreview } from "@/lib/preview";
 import { trpc } from "@/lib/trpc";
 import { useLocalStorage } from "@/lib/use-local-storage";
 
-/**
- * The library page is a folder explorer (subfolders + papers of the current
- * folder, root by default). `view=all` and `tag` show flat paper lists instead.
- */
+/** Folder explorer; `view=all` and `tag` show flat lists instead. */
 
 export const Route = createFileRoute("/_app/")({
   validateSearch: z.object({
@@ -58,7 +55,6 @@ type Layout = (typeof LAYOUTS)[number];
 function LibraryPage() {
   const { view, tag, folder } = Route.useSearch();
   const filtered = Boolean(view || tag);
-  /** Explorer mode: browse the folder hierarchy (root or `folder`). */
   const isExplorer = !filtered;
   const dialog = useFolderDialog();
   const navigate = Route.useNavigate();
@@ -73,7 +69,6 @@ function LibraryPage() {
       tagId: tag,
       folderId: isExplorer ? (folder ?? null) : undefined,
     }),
-    // Poll while the worker is still busy with any paper.
     refetchInterval: (query) => (query.state.data?.some((p) => isBusy(p.status)) ? 2000 : false),
   });
 
@@ -294,7 +289,6 @@ function LibraryPage() {
         state={dialog.state}
         onClose={dialog.close}
         onCreated={() => {
-          // Show the explorer where the new folder now appears.
           if (!isExplorer) navigate({ search: folder ? { folder } : {} });
         }}
       />
@@ -346,7 +340,6 @@ function FolderTableRow({
   );
 }
 
-/** Menu items for a paper (inside a dropdown): move to another folder. */
 function PaperMoveItems({ paperId, folderId }: { paperId: string; folderId: string | null }) {
   const move = useMovePapers();
   return (

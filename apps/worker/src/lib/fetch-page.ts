@@ -1,7 +1,7 @@
 import { lookup } from "node:dns/promises";
 import { BlockList, isIP } from "node:net";
 
-/** An error that will not go away by retrying (blocked host, wrong content type, 404, …). */
+/** Not worth retrying (blocked host, wrong content type, 404, …). */
 export class PermanentFetchError extends Error {
   override name = "PermanentFetchError";
 }
@@ -100,7 +100,6 @@ function decodeHtml(body: Uint8Array, contentType: string): string {
   return new TextDecoder().decode(body);
 }
 
-/** Whether the page allows being shown in an iframe on another site. */
 function allowsEmbedding(headers: Headers): boolean {
   const frameOptions = headers.get("x-frame-options")?.toLowerCase();
   if (frameOptions && /deny|sameorigin/.test(frameOptions)) return false;
@@ -116,10 +115,7 @@ function allowsEmbedding(headers: Headers): boolean {
   return true;
 }
 
-/**
- * fetch() hardened for user-supplied URLs: http(s) only, every redirect hop is
- * checked against private networks, with a timeout. Returns the final 2xx response.
- */
+/** For user-supplied URLs: http(s) only, private networks blocked on every redirect hop. */
 async function safeFetch(
   url: string,
   options: { allowPrivateNetworks: boolean; timeoutMs: number; accept: string },
@@ -165,7 +161,6 @@ export type FetchedPage =
   | { kind: "html"; finalUrl: string; html: string; embeddable: boolean }
   | { kind: "pdf"; finalUrl: string; body: Uint8Array };
 
-/** Fetches a web page (or a PDF behind a URL) for clipping. */
 export async function fetchPage(
   url: string,
   options: { allowPrivateNetworks: boolean; timeoutMs?: number; maxBytes?: number },
@@ -194,10 +189,9 @@ export async function fetchPage(
   };
 }
 
-/** Raster formats we store and serve as thumbnails. SVG is excluded on purpose (scripts). */
+/** No SVG: it can carry scripts. */
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
 
-/** Downloads a preview image (e.g. og:image) with the same protections as page fetches. */
 export async function fetchImage(
   url: string,
   options: { allowPrivateNetworks: boolean; maxBytes?: number },

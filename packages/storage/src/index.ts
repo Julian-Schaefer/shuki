@@ -39,7 +39,6 @@ export class Storage {
     });
   }
 
-  /** Creates the bucket if it does not exist yet. */
   async ensureBucket(): Promise<void> {
     try {
       await this.#client.send(new HeadBucketCommand({ Bucket: this.#bucket }));
@@ -52,7 +51,6 @@ export class Storage {
     }
   }
 
-  /** Lightweight reachability check for health endpoints. */
   async ping(): Promise<boolean> {
     try {
       await this.#client.send(new HeadBucketCommand({ Bucket: this.#bucket }));
@@ -62,7 +60,6 @@ export class Storage {
     }
   }
 
-  /** Streams an object to S3 (multipart upload for large bodies). */
   async put({ key, body, contentType }: PutObjectInput): Promise<void> {
     const upload = new Upload({
       client: this.#client,
@@ -88,11 +85,9 @@ export class Storage {
   }
 }
 
-/** Key conventions – everything is namespaced per user. */
 export const storageKeys = {
   paperFile: (userId: string, paperId: string, fileId: string) =>
     `users/${userId}/papers/${paperId}/${fileId}`,
-  /** Preview image of a paper (first PDF page or the website's image). */
   paperThumbnail: (userId: string, paperId: string) =>
     `users/${userId}/papers/${paperId}/thumbnail`,
 };

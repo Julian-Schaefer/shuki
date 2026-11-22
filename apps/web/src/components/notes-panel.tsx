@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 
 type NotesApi = ReturnType<typeof usePaperNotes>;
 
-/** Column next to the document: all notes of a paper, in reading order. */
 export function NotesPanel({
   paperId,
   api,
@@ -18,9 +17,8 @@ export function NotesPanel({
   paperId: string;
   api: NotesApi;
   activeId: string | null;
-  /** Changes whenever a note should be scrolled to and focused. */
+  /** A new nonce scrolls to and focuses that note. */
   focusRequest: { id: string; nonce: number } | null;
-  /** Marks a note as active; `focus` also scrolls to it and focuses its editor. */
   onActivate: (id: string, focus?: boolean) => void;
   onJump: (note: Note) => void;
 }) {
@@ -115,7 +113,7 @@ function NoteCard({
   const flushRef = useRef(flush);
   flushRef.current = flush;
 
-  // Save what's left when the card goes away (e.g. leaving the reading mode).
+  // Flush pending edits on unmount.
   useEffect(() => () => flushRef.current(), []);
 
   useEffect(() => {

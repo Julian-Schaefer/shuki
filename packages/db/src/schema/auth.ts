@@ -1,16 +1,12 @@
 import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-/**
- * Tables required by Better Auth. Column names follow Better Auth's defaults
- * (mapped to snake_case by Drizzle's casing option).
- */
 export const user = pgTable("user", {
   id: text().primaryKey(),
   name: text().notNull(),
   email: text().notNull().unique(),
   emailVerified: boolean().notNull().default(false),
   image: text(),
-  /** "admin" | "user" – the first registered user becomes admin. */
+  /** "admin" | "user" */
   role: text().notNull().default("user"),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true })

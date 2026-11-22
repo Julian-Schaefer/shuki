@@ -6,10 +6,9 @@ export type Note = RouterOutputs["note"]["listByPaper"][number];
 export type NoteAnchor = NonNullable<Note["anchor"]>;
 export type PdfAnchor = Extract<NoteAnchor, { type: "pdf" }>;
 export type TextAnchor = Extract<NoteAnchor, { type: "text" }>;
-/** Rectangle on a PDF page in 0..1 of the page size. */
 export type NoteRect = PdfAnchor["rects"][number];
 
-/** Order in the notes column: general notes first, then by position in the document. */
+/** General notes first, then by position in the document. */
 export function sortNotes(notes: Note[]): Note[] {
   const position = (note: Note): [number, number, number] => {
     const anchor = note.anchor;
@@ -25,10 +24,8 @@ export function sortNotes(notes: Note[]): Note[] {
   });
 }
 
-/** Whitespace-collapsed quote for display. */
 export const displayQuote = (anchor: NoteAnchor) => anchor.quote.replace(/\s+/g, " ").trim();
 
-/** Notes of a paper plus mutations that keep the cached list in sync. */
 export function usePaperNotes(paperId: string) {
   const queryClient = useQueryClient();
   const listOptions = trpc.note.listByPaper.queryOptions({ paperId });

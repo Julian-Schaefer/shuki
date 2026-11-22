@@ -1,6 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 
-/** Open/close the right-hand preview panel (stored in the `preview` search param). */
 export function usePreview() {
   const { preview } = useSearch({ from: "/_app" });
   const navigate = useNavigate();

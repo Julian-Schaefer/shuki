@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/sidebar";
 import { trpc } from "@/lib/trpc";
 
-/** Tags as quick filters for the library (the "Projects" group of sidebar-07). */
 export function NavTags() {
   const { isMobile } = useSidebar();
   const location = useLocation();

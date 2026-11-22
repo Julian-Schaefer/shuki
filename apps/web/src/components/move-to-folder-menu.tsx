@@ -11,10 +11,6 @@ import {
 import { buildFolderTree, flattenFolderTree, foldersQuery } from "@/lib/folders";
 import { trpc } from "@/lib/trpc";
 
-/**
- * "Move to" submenu for dropdown menus. Lists the library root and every folder,
- * indented by depth. Folders in `disabledIds` (e.g. a folder's own subtree) are disabled.
- */
 export function MoveToFolderSubmenu({
   currentFolderId,
   disabledIds,
@@ -55,7 +51,6 @@ export function MoveToFolderSubmenu({
   );
 }
 
-/** Moves papers between folders and refreshes paper queries. */
 export function useMovePapers() {
   const queryClient = useQueryClient();
   return useMutation(

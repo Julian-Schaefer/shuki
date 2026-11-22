@@ -22,10 +22,8 @@ import { assertFolderOwned } from "./folder";
 
 const paperId = z.object({ id: z.uuid() });
 
-/** Only public web pages can be saved. */
 const webUrl = z.url({ protocol: /^https?$/, message: "Enter a valid http(s) URL" }).max(2048);
 
-/** Enqueues the background job that fits the paper's source. */
 function enqueueProcessing(
   boss: Parameters<typeof enqueue>[0],
   target: { id: string; sourceType: string },
@@ -43,7 +41,7 @@ export const paperRouter = router({
         .object({
           status: z.array(z.enum(processingStatus.enumValues)).optional(),
           tagId: z.uuid().optional(),
-          /** Papers directly inside this folder; `null` = library root. Omit for all papers. */
+          /** `null` = library root, omit for all papers. */
           folderId: z.uuid().nullable().optional(),
         })
         .default({}),
@@ -97,7 +95,6 @@ export const paperRouter = router({
     return { ...result, files, tagIds: tags.map((t) => t.id) };
   }),
 
-  /** Everything the preview panel needs: the PDF to show or the saved website. */
   preview: protectedProcedure.input(paperId).query(async ({ ctx, input }) => {
     const found = await ctx.db.query.paper.findFirst({
       where: and(eq(paper.id, input.id), eq(paper.userId, ctx.user.id)),
@@ -120,7 +117,6 @@ export const paperRouter = router({
     return { ...found, pdf: pdf ?? null, website: content?.html != null ? content : null };
   }),
 
-  /** Replaces the tags of a paper. */
   setTags: protectedProcedure
     .input(z.object({ id: z.uuid(), tagIds: z.array(z.uuid()).max(100) }))
     .mutation(async ({ ctx, input }) => {
@@ -150,9 +146,8 @@ export const paperRouter = router({
       z
         .object({
           title: z.string().trim().max(1000).optional(),
-          /** Save a website: the worker fetches it and extracts a reader view. */
           url: webUrl.optional(),
-          /** When true the client uploads a file next and the upload enqueues processing. */
+          /** The client uploads a file next; the upload enqueues processing. */
           withFile: z.boolean().default(false),
           folderId: z.uuid().nullable().default(null),
         })
@@ -165,7 +160,7 @@ export const paperRouter = router({
         .insert(paper)
         .values({
           userId: ctx.user.id,
-          // Websites without a title get the host as placeholder until the worker fills it in.
+          // Placeholder until the worker has the page title.
           title: input.title || new URL(input.url ?? "").hostname,
           url: input.url,
           folderId: input.folderId,
@@ -179,7 +174,6 @@ export const paperRouter = router({
       return created;
     }),
 
-  /** Moves papers into a folder (or to the library root with `folderId: null`). */
   move: protectedProcedure
     .input(z.object({ ids: z.array(z.uuid()).min(1).max(500), folderId: z.uuid().nullable() }))
     .mutation(async ({ ctx, input }) => {
@@ -190,7 +184,6 @@ export const paperRouter = router({
         .where(and(eq(paper.userId, ctx.user.id), inArray(paper.id, input.ids)));
     }),
 
-  /** Re-runs background processing, e.g. after a failure. */
   reprocess: protectedProcedure.input(paperId).mutation(async ({ ctx, input }) => {
     const [updated] = await ctx.db
       .update(paper)

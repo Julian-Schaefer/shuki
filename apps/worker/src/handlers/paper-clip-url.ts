@@ -8,11 +8,7 @@ import { fetchPage, PermanentFetchError } from "../lib/fetch-page";
 import { markProcessing, recordFailure } from "../lib/paper-status";
 import { tryGenerateThumbnail } from "../lib/thumbnail";
 
-/**
- * `paper.clip-url`: saves a website. Fetches the page, extracts a sanitized
- * reader view, plain text and metadata. A URL that serves a PDF is stored as
- * the paper's PDF instead.
- */
+/** A URL serving a PDF is stored as the paper's PDF. */
 export const createClipUrlHandler =
   (ctx: WorkerContext): JobHandler<"paper.clip-url"> =>
   async ({ paperId, replaceTitle }, job) => {

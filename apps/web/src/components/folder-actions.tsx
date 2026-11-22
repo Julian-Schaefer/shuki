@@ -7,7 +7,6 @@ import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdow
 import { type FolderRow, foldersQuery, subtreeIds } from "@/lib/folders";
 import { trpc } from "@/lib/trpc";
 
-/** Menu items for a folder: new subfolder, rename, move, delete. Used in sidebar and library. */
 export function FolderActionsMenuItems({
   folder,
   onNewSubfolder,

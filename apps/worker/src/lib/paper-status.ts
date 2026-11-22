@@ -1,7 +1,7 @@
 import { type Database, eq, paper } from "@shuki/db";
 import { type Job, type QueueName, queues } from "@shuki/jobs";
 
-/** Marks a paper as processing. Returns false when it no longer exists. */
+/** Returns false when the paper no longer exists. */
 export async function markProcessing(db: Database, paperId: string): Promise<boolean> {
   const [current] = await db
     .update(paper)
@@ -11,11 +11,7 @@ export async function markProcessing(db: Database, paperId: string): Promise<boo
   return Boolean(current);
 }
 
-/**
- * Records a failed attempt. Only the last attempt (or a permanent error) marks
- * the paper as failed – before that it stays pending until pg-boss retries.
- * Returns whether the job should be retried.
- */
+/** Only the last attempt (or a permanent error) marks the paper failed. Returns whether to retry. */
 export async function recordFailure(
   db: Database,
   options: {

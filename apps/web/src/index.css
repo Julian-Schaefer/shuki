@@ -127,16 +127,11 @@
   }
   html {
     @apply font-sans;
-    /*
-     * Global UI density. All sizes (text, spacing, buttons, icons, sidebar)
-     * are rem-based, so this scales the whole app. 93.75% = 15px at the browser
-     * default and still respects users who changed their browser font size.
-     */
+    /* 93.75% = 15px by default; all sizes are rem-based. */
     font-size: 93.75%;
   }
 }
 
-/* Reader view of saved websites (sanitized article HTML). */
 @layer components {
   .reader {
     @apply text-[0.95rem] leading-7 text-foreground;
@@ -199,15 +194,13 @@
   }
 }
 
-/* pdf.js viewer: undo Tailwind preflight sizing on rendered pages. */
+/* Undo Tailwind preflight inside pdf.js pages. */
 @layer components {
   .pdfViewer canvas,
   .pdfViewer img {
     max-width: none;
   }
-  /* pdf.js sizes pages for content-box; with Tailwind's border-box the page border
-     squeezes the canvas while the text layer keeps its size, so text selection and
-     highlights drift away from the rendered text. */
+  /* pdf.js expects content-box; border-box misaligns the text layer. */
   .pdfViewer .page {
     box-sizing: content-box;
   }
@@ -216,7 +209,6 @@
   }
 }
 
-/* Notes: marked passages in PDFs (overlay divs) and the reader view (CSS Highlight API). */
 @layer components {
   .shuki-highlights {
     position: absolute;

@@ -1,7 +1,4 @@
-/**
- * Production migration entry point (`node dist/migrate.mjs`), run by the
- * `migrate` service in docker-compose before server and worker start.
- */
+/** Run by the `migrate` service before server and worker start. */
 import { resolve } from "node:path";
 import { loadEnv, migrateEnvSchema } from "@shuki/config";
 import { runMigrations } from "@shuki/db";

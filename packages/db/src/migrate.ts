@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
 
-/** Postgres extensions required by Shuki. Created before any migration runs. */
+/** Created before any migration runs. */
 const EXTENSIONS = ["pg_trgm", "vector"] as const;
 
 export async function runMigrations(databaseUrl: string, migrationsFolder: string): Promise<void> {

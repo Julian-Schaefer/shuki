@@ -34,7 +34,6 @@ const noteColumns = {
 } as const;
 
 export const noteRouter = router({
-  /** All notes of a paper, oldest first. */
   listByPaper: protectedProcedure.input(z.object({ paperId: z.uuid() })).query(({ ctx, input }) =>
     ctx.db.query.note.findMany({
       where: and(eq(note.userId, ctx.user.id), eq(note.paperId, input.paperId)),
