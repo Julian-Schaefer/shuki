@@ -1,0 +1,38 @@
+# Backing services for local development: `pnpm services:up`
+# The apps themselves run on the host via `pnpm dev`.
+name: shuki-dev
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: shuki
+      POSTGRES_PASSWORD: shuki
+      POSTGRES_DB: shuki
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shuki -d shuki"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # S3-compatible object storage. Shuki creates its bucket on startup.
+  # Web console: http://localhost:9001 (shuki / shuki-secret)
+  s3:
+    image: rustfs/rustfs:1.0.6
+    environment:
+      RUSTFS_ACCESS_KEY: shuki
+      RUSTFS_SECRET_KEY: shuki-secret
+      RUSTFS_CONSOLE_ENABLE: "true"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - s3-data:/data
+
+volumes:
+  postgres-data:
+  s3-data:

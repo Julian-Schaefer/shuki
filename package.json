@@ -1,0 +1,29 @@
+{
+  "name": "shuki",
+  "private": true,
+  "description": "Self-hostable research paper & knowledge collection",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "packageManager": "pnpm@12.21.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "db:generate": "pnpm --filter @shuki/db generate",
+    "db:migrate": "pnpm --filter @shuki/db migrate",
+    "db:studio": "pnpm --filter @shuki/db studio",
+    "services:up": "docker compose -f docker-compose.dev.yml up -d",
+    "services:down": "docker compose -f docker-compose.dev.yml down"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.8",
+    "turbo": "2.11.13",
+    "typescript": "7.0.2"
+  }
+}

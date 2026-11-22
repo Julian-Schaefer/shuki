@@ -1,0 +1,4 @@
+{
+  "extends": "@shuki/tsconfig/node.json",
+  "include": ["src"]
+}

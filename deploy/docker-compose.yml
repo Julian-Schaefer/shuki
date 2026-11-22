@@ -1,0 +1,101 @@
+# Shuki – self-hosting stack.
+#
+#   cp .env.example .env    # then set BETTER_AUTH_SECRET and passwords
+#   docker compose up -d
+#
+# Open http://localhost:3000 and create the first account (becomes admin).
+# See docs/self-hosting.md for reverse proxy, backups and external S3.
+name: shuki
+
+x-shuki: &shuki
+  image: ${SHUKI_IMAGE:-ghcr.io/julian-schaefer/shuki:latest}
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  restart: unless-stopped
+  environment:
+    APP_URL: ${APP_URL:-http://localhost:3000}
+    BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}
+    ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+    DATABASE_URL: postgres://shuki:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/shuki
+    S3_ENDPOINT: ${S3_ENDPOINT:-http://s3:9000}
+    S3_REGION: ${S3_REGION:-us-east-1}
+    S3_BUCKET: ${S3_BUCKET:-shuki}
+    S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?Set S3_ACCESS_KEY_ID in .env}
+    S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?Set S3_SECRET_ACCESS_KEY in .env}
+    S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
+    MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-100}
+    WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+    AI_BASE_URL: ${AI_BASE_URL:-}
+    AI_API_KEY: ${AI_API_KEY:-}
+    AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-}
+    AI_CHAT_MODEL: ${AI_CHAT_MODEL:-}
+    LOG_LEVEL: ${LOG_LEVEL:-info}
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shuki
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: shuki
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shuki -d shuki"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Bundled S3-compatible storage. To use an external provider (AWS S3, R2,
+  # B2, …) set S3_ENDPOINT and credentials in .env and remove this service.
+  s3:
+    image: rustfs/rustfs:1.0.6
+    restart: unless-stopped
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY_ID:?Set S3_ACCESS_KEY_ID in .env}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_ACCESS_KEY:?Set S3_SECRET_ACCESS_KEY in .env}
+    volumes:
+      - s3-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    <<: *shuki
+    command: migrate
+    restart: "no"
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    <<: *shuki
+    command: server
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      s3:
+        condition: service_healthy
+
+  worker:
+    <<: *shuki
+    command: worker
+    healthcheck:
+      disable: true # the worker serves no HTTP endpoint
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      s3:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  s3-data:

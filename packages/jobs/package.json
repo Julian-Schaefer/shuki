@@ -1,0 +1,21 @@
+{
+  "name": "@shuki/jobs",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pg-boss": "12.39.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@shuki/tsconfig": "workspace:*",
+    "@types/node": "26.6.6"
+  }
+}

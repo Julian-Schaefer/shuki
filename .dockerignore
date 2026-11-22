@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/.turbo
+**/*.tsbuildinfo
+.git
+.github
+.env
+.env.*
+!.env.example
+deploy
+docs
+*.log
+apps/web/src/routeTree.gen.ts
